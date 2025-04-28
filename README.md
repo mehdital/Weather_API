@@ -10,3 +10,7 @@ cd backend
 npm install
 npm test
 docker compose up --build
+
+localhost:3000/docs --> swagger
+localhost:3000      --> Back-end URL
+localhort:8080      --> Front-end
