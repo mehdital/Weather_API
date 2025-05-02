@@ -18,7 +18,8 @@ export async function fetchCurrent(city) {
   const { data } = await axios.get(url);
   if (!data || data.count === 0) throw { status: 404, message: 'Unknown city.' };
 
-  cache.set(key, data, { ttl: +process.env.CACHE_TTL * 1000 || 10000000 });
+  const ttl = +process.env.CACHE_TTL_CURRENT || 3600;
+  cache.set(key, data, { ttl: ttl * 1000 });
   return data;
 }
 
@@ -30,6 +31,7 @@ export async function fetchForecast(city) {
   const { data } = await axios.get(url);
   if (!data || !data.data || data.data.length === 0) throw { status: 404, message: 'Unknown city.' };
 
-  cache.set(key, data, { ttl: +process.env.CACHE_TTL * 1000 || 10000000 });
+  const ttl = +process.env.CACHE_TTL_FORECAST || 10800;     // secondes
+  cache.set(key, data, { ttl: ttl * 1000 });
   return data;
 }

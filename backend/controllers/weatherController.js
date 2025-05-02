@@ -1,5 +1,6 @@
-import { fetchCurrent, fetchForecast } from '../services/weatherbitService.js';
-import { convertWindToBeaufort } from '../utils/beaufort.js';
+import { fetchCurrent, fetchForecast }  from '../services/weatherbitService.js';
+import { convertWindToBeaufort }        from '../utils/beaufort.js';
+import { trend, evolution }      from '../utils/trend.js';
 
 export async function getCurrent(req, res, next) {
   const { location } = req.query;
@@ -14,9 +15,7 @@ export async function getCurrent(req, res, next) {
       windSpeed_kmh: +(d.wind_spd * 3.6).toFixed(1),// m/s to km/h
       humidity: d.rh
     });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export async function getForecast(req, res, next) {
@@ -34,8 +33,25 @@ export async function getForecast(req, res, next) {
         wind: { speed_kmh: speedKmh, ...beaufort }
       };
     });
-    res.json({ location: `${data.city_name}, ${data.country_code}`, forecast });
-  } catch (err) {
-    next(err);
-  }
+
+    const temps  = forecast.map(d => d.temperature);
+    const press  = forecast.map(d => d.pressure);
+    const winds  = forecast.map(d => d.wind.speed_kmh);
+
+    const tempTrend = trend(temps);                 // hausse / stable / baisse
+    const presTrend = trend(press, { strong: 8, weak: 2 });
+    const evol      = evolution(tempTrend, presTrend);
+
+    const meanWind  = winds.reduce((a, v) => a + v, 0) / winds.length;
+    const beaufort  = convertWindToBeaufort(meanWind);
+
+    res.json({
+      location         : `${data.city_name}, ${data.country_code}`,
+      evolution        : evol,
+      temperatureTrend : tempTrend,
+      pressureTrend    : presTrend,
+      averageWind      : { speed_kmh: +meanWind.toFixed(1), ...beaufort },
+      forecast
+    });
+  } catch (err) { next(err); }
 }
