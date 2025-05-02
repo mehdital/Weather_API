@@ -64,11 +64,20 @@ describe('weatherController', () => {
     );
   });
 
-  test('forecast → 7 days', async () => {
+  test('forecast 7 days', async () => {
     const req = { query: { location: 'Paris' } };
     const res = makeRes();
     await getForecast(req, res, jest.fn());
-    const { forecast } = res.json.mock.calls[0][0];
-    expect(forecast).toHaveLength(7);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.forecast).toHaveLength(7);
+    expect(body).toEqual(expect.objectContaining({
+      evolution: expect.any(String),
+      temperatureTrend: expect.any(String),
+      pressureTrend: expect.any(String),
+      averageWind: expect.objectContaining({
+        beaufort: expect.any(Number)
+      })
+    }));
   });
 });
